@@ -1,0 +1,5 @@
+.env
+.idea
+*.db3
+log/*.log
+log/*.log.*
