@@ -4,8 +4,9 @@ import os
 import sys
 from logging import handlers
 
-ENCODING = "utf-8"
-LOGGING_LEVEL = logging.DEBUG
+from common import ENCODING
+from common import LOGGING_LEVEL
+
 MAIN_FORMATTER = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
 
 # Подготовка имени файла для логирования
@@ -16,7 +17,7 @@ ERR_PATH = os.path.join(PATH, "logger_err.log")
 # создаём потоки вывода логов
 STREAM_HANDLER = logging.StreamHandler(sys.stdout)
 STREAM_HANDLER.setFormatter(MAIN_FORMATTER)
-STREAM_HANDLER.setLevel(logging.DEBUG)
+STREAM_HANDLER.setLevel(LOGGING_LEVEL)
 
 LOG_FILE = handlers.TimedRotatingFileHandler(
     LOG_PATH,

@@ -2,22 +2,24 @@ import socket
 import sys
 import threading
 
+from common import MAX_PACKAGE_LENGTH
+
 
 class Server:
     def __init__(
         self,
         listen_host,
         listen_port,
-        remove_host,
-        remove_port,
+        remote_host,
+        remote_port,
         maximum_connections,
         database,
     ):
         # Параментры подключения
         self.host = listen_host
         self.port = listen_port
-        self.remove_host = remove_host
-        self.remove_port = remove_port
+        self.remote_host = remote_host
+        self.remote_port = remote_port
         self.maximum_connections = maximum_connections
         self.sock = None
 
@@ -54,14 +56,14 @@ class Server:
                 sys.exit(1)
 
     def process_client_message(self, client, client_address):
-        message = client.recv(8192)
+        message = client.recv(MAX_PACKAGE_LENGTH)
         self.database.insert_sent_packet(client_address[0], message)
         proxy = Proxy(
             client,
             message,
             client_address,
-            self.remove_host,
-            self.remove_port,
+            self.remote_host,
+            self.remote_port,
             self.database,
         )
         # proxy.daemon = True
@@ -74,8 +76,8 @@ class Proxy(threading.Thread):
         client,
         message,
         address,
-        remove_host,
-        remove_port,
+        remote_host,
+        remote_port,
         database,
     ):
         self.client = client
@@ -84,14 +86,14 @@ class Proxy(threading.Thread):
         self.address = address
         self.host = None
         self.port = None
-        self.remove_host = remove_host
-        self.remove_port = remove_port
+        self.remote_host = remote_host
+        self.remote_port = remote_port
         self.database = database
         super().__init__()
 
     def init_socket(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.connect((self.remove_host, self.remove_port))
+        self.sock.connect((self.remote_host, self.remote_port))
         self.host, self.port = self.sock.getpeername()
 
     def run(self):
@@ -99,7 +101,7 @@ class Proxy(threading.Thread):
             self.init_socket()
             self.sock.send(self.message)
             while True:
-                reply = self.sock.recv(8192)
+                reply = self.sock.recv(MAX_PACKAGE_LENGTH)
                 self.database.insert_received_packet(self.address[0], reply)
                 if len(reply):
                     self.client.send(reply)
@@ -108,8 +110,11 @@ class Proxy(threading.Thread):
 
             self.sock.close()
             self.client.close()
+
         except socket.error:
+            self.database.insert_error(self.address[0], socket.error)
+
+        finally:
             self.sock.close()
             self.client.close()
-            self.database.insert_error(self.address[0], socket.error)
             sys.exit(1)

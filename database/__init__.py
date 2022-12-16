@@ -13,8 +13,8 @@ from sqlalchemy import LargeBinary
 from sqlalchemy import String
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import Session
 from sqlalchemy.orm import relationship
-from sqlalchemy.orm import sessionmaker
 
 # flake8: noqa: E402
 import log
@@ -125,44 +125,37 @@ class LoggerDatabase:
 
     logger = logging.getLogger("logger")
 
-    def __init__(self, engine: str, file_log: bool = True):
+    def __init__(self, eng: str, file_log: bool = True):
         self.file_log = file_log
         self.engine = create_engine(
-            engine,
+            eng,
             echo=False,
             pool_recycle=7200,
         )
         Base.metadata.create_all(self.engine)
-        session = sessionmaker(bind=self.engine)
-        self.session = session()
 
-    def _insert_device(self, ip_address, description=None):
+    def _insert_device(self, session, ip_address, description=None):
         device = Device(ip_address=ip_address, description=description)
-        self.session.add(device)
-        self.session.commit()
+        session.add(device)
+        session.commit()
         if self.file_log:
             self.logger.info(f"Добавлено устройство {device}")
         return device
 
-    def _find_device(self, ip_address) -> Device:
-        device = (
-            self.session.query(Device)
-            .filter_by(
-                ip_address=ip_address,
-            )
-            .first()
-        )
+    def _find_device(self, session, ip_address) -> Device:
+        device = session.query(Device).filter_by(ip_address=ip_address).first()
         if not device:
-            device = self._insert_device(ip_address=ip_address)
+            device = self._insert_device(session, ip_address=ip_address)
         return device
 
     def _insert_packet(
         self,
+        session,
         device_ip: str,
         raw_data: bytes,
         packet_type: PacketType,
     ):
-        device = self._find_device(device_ip)
+        device = self._find_device(session, device_ip)
         packet = Message(
             device=device,
             raw_data=raw_data,
@@ -174,45 +167,57 @@ class LoggerDatabase:
             self.logger.info(
                 f"{MessageType.packet}-{packet_type}. {device}: {raw_data}"
             )
-        self.session.add(packet)
-        self.session.commit()
+        session.add(packet)
+        session.commit()
 
     def insert_sent_packet(self, device_ip: str, raw_data: bytes):
-        self._insert_packet(device_ip, raw_data, PacketType.sent)
+        with Session(self.engine) as session:
+            self._insert_packet(session, device_ip, raw_data, PacketType.sent)
 
     def insert_received_packet(self, device_ip: str, raw_data: bytes):
-        self._insert_packet(device_ip, raw_data, PacketType.received)
+        with Session(self.engine) as session:
+            self._insert_packet(
+                session,
+                device_ip,
+                raw_data,
+                PacketType.received,
+            )
 
     def insert_info(self, device_ip: str, data: str):
-        device = self._find_device(device_ip)
-        info = Message(
-            device=device,
-            data=data,
-            message_type=MessageType.info,
-        )
-        if self.file_log:
-            self.logger.info(f"{MessageType.info}. {device}: {data}")
-        self.session.add(info)
-        self.session.commit()
+        with Session(self.engine) as session:
+            device = self._find_device(session, device_ip)
+            info = Message(
+                device=device,
+                data=data,
+                message_type=MessageType.info,
+            )
+            session.add(info)
+            session.commit()
+            if self.file_log:
+                self.logger.info(f"{MessageType.info}. {device}: {data}")
 
     def insert_error(self, device_ip: str, data: str):
-        device = self._find_device(device_ip)
-        error = Message(
-            device=device,
-            data=data,
-            message_type=MessageType.error,
-        )
-        if self.file_log:
-            self.logger.error(f"{MessageType.info}. {device}: {data}")
-        self.session.add(error)
-        self.session.commit()
+        with Session(self.engine) as session:
+            device = self._find_device(session, device_ip)
+            error = Message(
+                device=device,
+                data=data,
+                message_type=MessageType.error,
+            )
+            session.add(error)
+            session.commit()
+            if self.file_log:
+                self.logger.error(f"{MessageType.info}. {device}: {data}")
 
     def message_history(self) -> List[Message]:
-        return self.session.query(Message).order_by(Message.timestamp).all()
+        with Session(self.engine) as session:
+            history = session.query(Message).order_by(Message.timestamp).all()
+        return history
 
     def clear_history(self):
-        self.session.query(Message).delete()
-        self.session.commit()
+        with Session(self.engine) as session:
+            session.query(Message).delete()
+            session.commit()
 
 
 if __name__ == "__main__":
