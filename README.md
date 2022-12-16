@@ -1,3 +1,5 @@
+![Lint](https://github.com/zzzkorn/progress-proxylogger/actions/workflows/lint.yml/badge.svg)
+
 # Proxy сервер с возможностью логирования данных
 
 ## Краткая информация о модуле
