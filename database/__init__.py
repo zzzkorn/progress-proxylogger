@@ -110,13 +110,13 @@ class Message(Base):
 
     def __str__(self):
         return (
-            f"{self.timestamp} . {self.device}. "
+            f"id={self.id}. {self.timestamp} . {self.device}. "
             f"Данные: {self.data or self.raw_data}"
         )
 
     def __repr__(self):
         return (
-            f"{self.timestamp} . {self.device}. "
+            f"id={self.id}. {self.timestamp} . {self.device}. "
             f"Данные: {self.data or self.raw_data}"
         )
 
@@ -170,6 +170,12 @@ class LoggerDatabase:
         session.add(packet)
         session.commit()
 
+    @staticmethod
+    def insert_parse_data(session, message: Message, data):
+        message.data = data.to_json()
+        session.add(message)
+        session.commit()
+
     def insert_sent_packet(self, device_ip: str, raw_data: bytes):
         with Session(self.engine) as session:
             self._insert_packet(session, device_ip, raw_data, PacketType.sent)
@@ -218,6 +224,19 @@ class LoggerDatabase:
         with Session(self.engine) as session:
             session.query(Message).delete()
             session.commit()
+
+    def get_packets_for_parse(self) -> Message:
+        with Session(self.engine) as session:
+            for packet in (
+                session.query(Message)
+                .filter(
+                    Message.message_type == MessageType.packet,
+                    Message.data.is_(None),
+                )
+                .all()
+            ):
+                self.logger.info(f"Отдан пакет для парсинга: {packet}")
+                yield session, packet
 
 
 if __name__ == "__main__":

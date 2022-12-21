@@ -27,3 +27,9 @@ python main.py -t proxy
 ```bash
 python main.py -t imitation
 ```
+
+## Запуск декодера пакетов с сырыми данными
+
+```bash
+python main.py -t decode
+```
