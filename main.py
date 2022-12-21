@@ -6,6 +6,7 @@ from decouple import config
 from common import IMITATION_DELAY
 from common import MAX_CONNECTIONS
 from database import LoggerDatabase
+from decoder import Decoder
 from imitation import Imitation
 from proxy import Server
 
@@ -36,7 +37,7 @@ def create_arg_parser():
     parser.add_argument(
         "-t",
         "--type",
-        choices=["proxy", "imitation"],
+        choices=["proxy", "imitation", "decode"],
         default="proxy",
         type=str,
         help="Тип запускаемого сервера",
@@ -61,9 +62,13 @@ def main():
         )
         imitation.start()
 
+    elif script_type == "decode":
+        database = LoggerDatabase(eng=database_engine, file_log=True)
+        decoder = Decoder(database)
+        decoder.run()
+
     else:
         database = LoggerDatabase(eng=database_engine, file_log=True)
-
         server = Server(
             local_host,
             local_port,
