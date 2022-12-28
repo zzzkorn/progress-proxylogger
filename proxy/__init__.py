@@ -2,37 +2,30 @@ import socket
 import sys
 import threading
 
-from common import MAX_PACKAGE_LENGTH
+from common.conf import Config
+from database import LoggerDatabase
 
 
 class Server:
     def __init__(
         self,
-        listen_host,
-        listen_port,
-        remote_host,
-        remote_port,
-        maximum_connections,
-        database,
+        cfg: Config,
+        database: LoggerDatabase,
     ):
-        # Параментры подключения
-        self.host = listen_host
-        self.port = listen_port
-        self.remote_host = remote_host
-        self.remote_port = remote_port
-        self.maximum_connections = maximum_connections
+        self.config = cfg
+        self.address = cfg.address
+        self.maximum_connections = cfg.maximum_connections
+        self.max_package_length = cfg.max_package_length
         self.sock = None
-
-        # База данных сервера
         self.database = database
 
     def init_socket(self):
         self.database.logger.info(
-            f"Запущен сервер {self.host}:{self.port}. Если адрес не указан, "
+            f"Запущен сервер {self.address}. Если адрес не указан, "
             f"принимаются соединения с любых адресов."
         )
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.bind((self.host, self.port))
+        self.sock.bind(self.address)
         self.sock.listen(self.maximum_connections)
 
     def run(self):
@@ -44,26 +37,23 @@ class Server:
             try:
                 client, client_address = self.sock.accept()
                 self.database.logger.info(
-                    f"Установлено соедение {self.host}:{self.port} с "
+                    f"Установлено соедение {self.address} с "
                     f"{client_address}"
                 )
-                self.process_client_message(client, client_address)
+                self.process_client_message(client, client_address[0])
             except KeyboardInterrupt:
                 self.sock.close()
-                self.database.logger.info(
-                    f"Соедение {self.host}: {self.port} прервано"
-                )
+                self.database.logger.info(f"Соедение {self.address} прервано")
                 sys.exit(1)
 
-    def process_client_message(self, client, client_address):
-        message = client.recv(MAX_PACKAGE_LENGTH)
-        self.database.insert_sent_packet(client_address[0], message)
+    def process_client_message(self, client, device_address):
+        message = client.recv(self.max_package_length)
+        self.database.insert_sent_packet(device_address, message)
         proxy = Proxy(
             client,
             message,
-            client_address,
-            self.remote_host,
-            self.remote_port,
+            device_address,
+            self.config,
             self.database,
         )
         # proxy.daemon = True
@@ -75,35 +65,34 @@ class Proxy(threading.Thread):
         self,
         client,
         message,
-        address,
-        remote_host,
-        remote_port,
-        database,
+        device_address,
+        cfg: Config,
+        database: LoggerDatabase,
     ):
         self.client = client
         self.sock = None
         self.message = message
-        self.address = address
-        self.host = None
-        self.port = None
-        self.remote_host = remote_host
-        self.remote_port = remote_port
+        self.device_address = device_address
+        self.remote = cfg.remote
+        self.max_package_length = cfg.max_package_length
         self.database = database
         super().__init__()
 
     def init_socket(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.connect((self.remote_host, self.remote_port))
-        self.host, self.port = self.sock.getpeername()
+        self.sock.connect(self.remote)
 
     def run(self):
         try:
             self.init_socket()
             self.sock.send(self.message)
             while True:
-                reply = self.sock.recv(MAX_PACKAGE_LENGTH)
-                self.database.insert_received_packet(self.address[0], reply)
+                reply = self.sock.recv(self.max_package_length)
                 if len(reply):
+                    self.database.insert_received_packet(
+                        self.device_address,
+                        reply,
+                    )
                     self.client.send(reply)
                 else:
                     break
@@ -111,8 +100,8 @@ class Proxy(threading.Thread):
             self.sock.close()
             self.client.close()
 
-        except socket.error:
-            self.database.insert_error(self.address[0], socket.error)
+        except socket.error as e:
+            self.database.insert_error(self.device_address, e)
 
         finally:
             self.sock.close()

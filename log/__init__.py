@@ -4,8 +4,8 @@ import os
 import sys
 from logging import handlers
 
-from common import ENCODING
-from common import LOGGING_LEVEL
+from common.variables import ENCODING
+from common.variables import LOGGING_LEVEL
 
 MAIN_FORMATTER = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
 

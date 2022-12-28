@@ -4,17 +4,12 @@ from socket import AF_INET
 from socket import SOCK_STREAM
 from socket import socket
 
-from common import MAX_PACKAGE_LENGTH
+from common.variables import MAX_PACKAGE_LENGTH
 
 
 class ImitationClientBase(threading.Thread):
-    def __init__(
-        self,
-        host,
-        port,
-        delay,
-    ):
-        self.address = (host, port)
+    def __init__(self, address, delay):
+        self.address = address
         self.delay = delay
         super().__init__()
 
