@@ -18,6 +18,7 @@ from sqlalchemy.orm import relationship
 
 # flake8: noqa: E402
 import log
+from common.conf import Config
 
 
 class MessageType(EnumType):
@@ -125,10 +126,10 @@ class LoggerDatabase:
 
     logger = logging.getLogger("logger")
 
-    def __init__(self, eng: str, file_log: bool = True):
-        self.file_log = file_log
+    def __init__(self, cfg: Config):
+        self.file_log = cfg.file_log
         self.engine = create_engine(
-            eng,
+            cfg.database_engine,
             echo=False,
             pool_recycle=7200,
         )

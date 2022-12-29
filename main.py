@@ -1,30 +1,11 @@
 import argparse
 import sys
 
-from decouple import config
-
-from common import IMITATION_DELAY
-from common import MAX_CONNECTIONS
+from common.conf import Config
 from database import LoggerDatabase
 from decoder import Decoder
 from imitation import Imitation
 from proxy import Server
-
-local_host = config("HOST", default="localhost", cast=str)
-local_port = config("PORT", cast=int)
-maximum_connections = config(
-    "MAXIMUM_CONNECTIONS",
-    default=MAX_CONNECTIONS,
-    cast=int,
-)
-remote_host = config("REMOVE_HOST", cast=str)
-remote_port = config("REMOVE_PORT", cast=int)
-imitation_delay = config("IMITATION_DELAY", default=IMITATION_DELAY, cast=int)
-database_engine = config(
-    "DATABASE_ENGINE",
-    cast=str,
-    default="sqlite:///test_base.db3",
-)
 
 
 def create_arg_parser():
@@ -51,32 +32,20 @@ def main():
     namespace = parser.parse_args(sys.argv[1:])
     script_type = namespace.type
 
+    cfg = Config()
+
     if script_type == "imitation":
-        imitation = Imitation(
-            local_host,
-            local_port,
-            remote_host,
-            remote_port,
-            maximum_connections,
-            imitation_delay,
-        )
+        imitation = Imitation(cfg)
         imitation.start()
 
     elif script_type == "decode":
-        database = LoggerDatabase(eng=database_engine, file_log=True)
+        database = LoggerDatabase(cfg)
         decoder = Decoder(database)
         decoder.run()
 
     else:
-        database = LoggerDatabase(eng=database_engine, file_log=True)
-        server = Server(
-            local_host,
-            local_port,
-            remote_host,
-            remote_port,
-            maximum_connections,
-            database,
-        )
+        database = LoggerDatabase(cfg)
+        server = Server(cfg, database)
         server.run()
 
 

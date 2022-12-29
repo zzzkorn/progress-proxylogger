@@ -3,18 +3,18 @@ from socket import AF_INET
 from socket import SOCK_STREAM
 from socket import socket
 
-from common import MAX_PACKAGE_LENGTH
+from common.variables import MAX_PACKAGE_LENGTH
 
 
 class ImitationServerBase(threading.Thread):
-    def __init_socket(self, host, port, number_of_clients):
+    def __init_socket(self, address, number_of_clients):
         self.sock = socket(AF_INET, SOCK_STREAM)
-        self.sock.bind((host, port))
+        self.sock.bind(address)
         self.sock.listen(number_of_clients)
 
-    def __init__(self, host, port, number_of_clients):
+    def __init__(self, address, number_of_clients):
         self.sock = None
-        self.__init_socket(host, port, number_of_clients)
+        self.__init_socket(address, number_of_clients)
         super().__init__()
 
     @property

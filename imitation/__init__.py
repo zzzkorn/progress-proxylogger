@@ -1,6 +1,7 @@
 import time
 
-from common import ENCODING
+from common.conf import Config
+from common.variables import ENCODING
 from imitation.client import ImitationClientBase
 from imitation.packet import PacketBase
 from imitation.server import ImitationServerBase
@@ -30,24 +31,23 @@ class Imitation:
     clients = []
     server = None
 
-    def __init__(
-        self,
-        listen_host: str,
-        listen_port: int,
-        remote_host: str,
-        remote_port: int,
-        number_of_clients: int = 3,
-        delay: float = 2,
-    ):
-        self.init_server(remote_host, remote_port, number_of_clients)
-        self.init_clients(listen_host, listen_port, number_of_clients, delay)
+    def __init__(self, cfg: Config):
+        self.init_server(
+            cfg.remote,
+            cfg.maximum_connections,
+        )
+        self.init_clients(
+            cfg.address,
+            cfg.maximum_connections,
+            cfg.imitation_delay,
+        )
 
-    def init_server(self, host, port, number_of_clients):
-        self.server = ImitationServer(host, port, number_of_clients)
+    def init_server(self, remote, number_of_clients):
+        self.server = ImitationServer(remote, number_of_clients)
 
-    def init_clients(self, host, port, number_of_clients, delay):
+    def init_clients(self, address, number_of_clients, delay):
         for _ in range(number_of_clients):
-            imitation_client = ImitationClient(host, port, delay)
+            imitation_client = ImitationClient(address, delay)
             self.clients.append(imitation_client)
 
     def start(self):
