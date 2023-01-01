@@ -35,45 +35,48 @@ class ProxyPorts(Csv):
 
 
 class Config:
+
+    config = config
+
     def _validate(self):
         pass
 
     def _read_cfg(self):
 
-        host = config("HOST", cast=str)
-        port = config("PORT", cast=int)
+        host = self.config("HOST", cast=str)
+        port = self.config("PORT", cast=int)
         self.address = (host, port)
 
-        remote_host = config("REMOVE_HOST", cast=str)
-        remote_port = config("REMOVE_PORT", cast=int)
+        remote_host = self.config("REMOTE_HOST", cast=str)
+        remote_port = self.config("REMOTE_PORT", cast=int)
 
         self.remote = (remote_host, remote_port)
 
-        self.maximum_connections = config(
+        self.maximum_connections = self.config(
             "MAX_CONNECTIONS",
             default=MAX_CONNECTIONS,
             cast=int,
         )
-        self.max_package_length = config(
+        self.max_package_length = self.config(
             "MAX_PACKAGE_LENGTH",
             default=MAX_PACKAGE_LENGTH,
             cast=int,
         )
-        self.imitation_delay = config(
+        self.imitation_delay = self.config(
             "IMITATION_DELAY",
             default=IMITATION_DELAY,
             cast=int,
         )
-        self.database_engine = config(
+        self.database_engine = self.config(
             "DATABASE_ENGINE",
             default=DATABASE_ENGINE,
             cast=str,
         )
-        self.proxy_ports = config(
+        self.proxy_ports = self.config(
             "PROXY_PORT_RANGE",
             cast=ProxyPorts(int),
         )
-        self.file_log = config("FILE_LOG", default=FILE_LOG, cast=bool)
+        self.file_log = self.config("FILE_LOG", default=FILE_LOG, cast=bool)
 
     def __init__(self):
         self._read_cfg()
