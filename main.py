@@ -2,8 +2,6 @@ import argparse
 import sys
 
 from common.conf import Config
-from database import LoggerDatabase
-from decoder import Decoder
 from imitation import Imitation
 from proxy import Server
 
@@ -39,13 +37,13 @@ def main():
         imitation.start()
 
     elif script_type == "decode":
-        database = LoggerDatabase(cfg)
-        decoder = Decoder(database)
-        decoder.run()
+        # database = LoggerDatabase(cfg)
+        # decoder = Decoder(database)
+        # decoder.run()
+        pass
 
     else:
-        database = LoggerDatabase(cfg)
-        server = Server(cfg, database)
+        server = Server(cfg)
         server.run()
 
 

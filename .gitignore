@@ -1,4 +1,6 @@
 .env
+.env-test
+.pytest_cache
 venv/
 .idea
 *.db3

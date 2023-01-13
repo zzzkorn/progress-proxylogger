@@ -15,3 +15,5 @@ ENCODING = "utf-8"
 FILE_LOG = True
 # Задержка отправки пакетов имитатора
 IMITATION_DELAY = 5
+
+TEST_SERVER_PORT = 40000
