@@ -7,7 +7,7 @@ import threading
 import log
 from common.conf import Config
 from common.mixins import SessionMixin
-from core import LoggerCore
+from core.logger import LoggerCore
 from database.logger import Error
 from database.logger import Packet
 from database.logger import PacketType

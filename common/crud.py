@@ -18,7 +18,7 @@ class CrudBase:
 
     def _add_filters(self, query: Query, filters: dict):
         for name, field in self.filter_fields.items():
-            should_filter = name in filters or not field.optional_field
+            should_filter = name in filters
             if should_filter:
                 query = field(query, filters.get(name))
         return query
