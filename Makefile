@@ -13,9 +13,13 @@ run_proxy:
 	. ./venv/bin/activate;     \
 	python main.py -t proxy;
 
-run_imitation:
+run_client_imitation:
 	. ./venv/bin/activate;     \
-	python main.py -t imitation;
+	python main.py -t client_imitation;
+
+run_full_imitation:
+	. ./venv/bin/activate;     \
+	python main.py -t full_imitation;
 
 run_decode:
 	. ./venv/bin/activate;     \
