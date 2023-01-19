@@ -8,6 +8,7 @@ from common.errors import ConfigError
 from common.variables import DATABASE_ENGINE
 from common.variables import FILE_LOG
 from common.variables import IMITATION_DELAY
+from common.variables import IMITATION_IMEI_IDS
 from common.variables import MAX_CONNECTIONS
 from common.variables import MAX_PACKAGE_LENGTH
 
@@ -77,6 +78,11 @@ class Config:
             cast=ProxyPorts(int),
         )
         self.file_log = self.config("FILE_LOG", default=FILE_LOG, cast=bool)
+        self.imitation_imei_ids = self.config(
+            "IMITATION_IMEI_IDS",
+            cast=Csv(int),
+            default=IMITATION_IMEI_IDS,
+        )
 
     def __init__(self):
         self._read_cfg()
