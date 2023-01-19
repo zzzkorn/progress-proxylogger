@@ -1,6 +1,9 @@
 clean:
 	rm -rf venv
 
+clear_logfiles:
+	rm log/*.log*
+
 deploy:
 	virtualenv -p python3 venv;     \
 	. ./venv/bin/activate;     \
