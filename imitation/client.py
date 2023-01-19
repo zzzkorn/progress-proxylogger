@@ -12,16 +12,7 @@ from common.variables import MAX_PACKAGE_LENGTH
 from imitation.variables import CLIENT_REGISTRATION_REQUEST_POSTFIX
 from imitation.variables import CLIENT_REGISTRATION_REQUEST_PREFIX
 from imitation.variables import CLIENT_REGISTRATION_RESPONSE
-from imitation.variables import POINT_BASE
-from imitation.variables import POINT_BASE_POSTFIX
 from imitation.variables import POINTS
-
-
-def get_points() -> bytes:
-    for point in POINTS:
-        timestamp = int(datetime.utcnow().timestamp()) - 0x4B3D3B00 + 3 * 3600
-        timestamp = timestamp.to_bytes(4, byteorder="little", signed=True)
-        yield POINT_BASE + timestamp + POINT_BASE_POSTFIX + point
 
 
 def get_registration_request(imei_id: Union[str, int]) -> bytes:
@@ -31,6 +22,25 @@ def get_registration_request(imei_id: Union[str, int]) -> bytes:
     request += bytearray(imei_id, "utf-8")
     request += CLIENT_REGISTRATION_REQUEST_POSTFIX
     return request
+
+
+class Points:
+
+    timestamp_pos_index = 25
+    timestamp_len = 4
+
+    @staticmethod
+    def get_timestamp():
+        timestamp = int(datetime.utcnow().timestamp()) - 0x4B3D3B00 + 3 * 3600
+        timestamp = timestamp.to_bytes(4, byteorder="little", signed=True)
+        return timestamp
+
+    def __call__(self):
+        for point in POINTS:
+            timestamp = self.get_timestamp()
+            for i in range(self.timestamp_len):
+                point[i + self.timestamp_pos_index] = timestamp[i]
+            yield point
 
 
 class ImitationClient(threading.Thread):
@@ -52,7 +62,7 @@ class ImitationClient(threading.Thread):
         self.sock.send(CLIENT_REGISTRATION_RESPONSE)
 
     def send_data(self):
-        for point in get_points():
+        for point in Points()():
             time.sleep(self.delay)
             self.sock.send(point)
             self.sock.recv(MAX_PACKAGE_LENGTH)
@@ -66,14 +76,3 @@ class ImitationClient(threading.Thread):
                 self.send_data()
             finally:
                 self.sock.close()
-
-
-if __name__ == "__main__":
-    imitation = ImitationClient(
-        # ("127.0.0.1", 50101),
-        ("213.219.245.116", 20100),
-        # ("193.232.47.4", 40005),
-        358887095658454,
-        1,
-    )
-    imitation.start()

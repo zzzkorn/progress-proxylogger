@@ -10,10 +10,8 @@ from imitation.variables import SERVER_REGISTRATION_RESPONSE
 
 
 def receive_messages(client: socket):
-    print(len(POINTS))
     for _ in range(len(POINTS)):
-        reply = client.recv(MAX_PACKAGE_LENGTH)
-        print(reply)
+        client.recv(MAX_PACKAGE_LENGTH)
         client.send(POINT_RESPONSE)
 
 
@@ -31,7 +29,6 @@ class ImitationServer(threading.Thread):
     def run(self):
         while True:
             client_sock, _ = self.sock.accept()
-            print(_)
             try:
                 client_sock.recv(MAX_PACKAGE_LENGTH)
                 client_sock.send(SERVER_REGISTRATION_RESPONSE)
@@ -39,13 +36,3 @@ class ImitationServer(threading.Thread):
                 receive_messages(client_sock)
             finally:
                 client_sock.close()
-
-
-if __name__ == "__main__":
-    imitation = ImitationServer(
-        ("127.0.0.1", 50101),
-        # ("185.60.134.234", 50101),
-        # ("193.232.47.4", 40005),
-        1,
-    )
-    imitation.start()
