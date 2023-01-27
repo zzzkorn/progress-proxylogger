@@ -1,8 +1,8 @@
 import argparse
 import sys
 
-from common.conf import Config
 from common.enums import ImitationType
+from conf import Config
 from imitation import Imitation
 from proxy import Server
 

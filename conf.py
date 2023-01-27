@@ -35,6 +35,14 @@ class ProxyPorts(Csv):
         return self.Ports(self.ports[0], self.ports[1])
 
 
+def cast_as_address(gen):
+    types = [str, int]
+    res = []
+    for i, el in enumerate(gen):
+        res.append(types[i](el))
+    return tuple(res)
+
+
 class Config:
 
     config = config
@@ -44,14 +52,14 @@ class Config:
 
     def _read_cfg(self):
 
-        host = self.config("HOST", cast=str)
-        port = self.config("PORT", cast=int)
-        self.address = (host, port)
-
-        remote_host = self.config("REMOTE_HOST", cast=str)
-        remote_port = self.config("REMOTE_PORT", cast=int)
-
-        self.remote = (remote_host, remote_port)
+        self.address = self.config(
+            "ADDRESS",
+            cast=Csv(str, delimiter=":", post_process=cast_as_address),
+        )
+        self.remote = self.config(
+            "REMOTE",
+            cast=Csv(str, delimiter=":", post_process=cast_as_address),
+        )
 
         self.maximum_connections = self.config(
             "MAX_CONNECTIONS",

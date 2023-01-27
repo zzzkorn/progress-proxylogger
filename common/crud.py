@@ -65,20 +65,23 @@ class CrudBase:
         for obj in query.all():
             yield obj
 
-    def create_obj(self, session: Session, values: dict):
+    def create_obj(self, values: dict):
         return self.model(**values)
 
     def create(self, session: Session, values: dict):
-        obj = self.create_obj(session, values)
+        obj = self.create_obj(values)
         session.add(obj)
         session.flush()
+        session.commit()
         return obj
 
     def update(self, session: Session, obj, values: dict):
         self._update_from_values(obj, values)
         session.flush()
+        session.commit()
         return obj
 
     def delete(self, session: Session, obj: object):
         obj.delete()
         session.flush()
+        session.commit()

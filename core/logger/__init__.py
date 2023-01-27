@@ -7,7 +7,7 @@ from core.logger.tcp_session import TcpSessionCrud
 
 class LoggerCore:
     def __init__(self):
-        self.message = MessageCrud()
+        self.messages = MessageCrud()
         self.packets = PacketCrud()
         self.info = InfoCrud()
         self.errors = ErrorCrud()
