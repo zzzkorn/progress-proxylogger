@@ -6,7 +6,6 @@ class SessionMixin:
 
     def init_session(self, engine):
         self.session = Session(engine)
-        super().__init__()
 
     def commit(self):
         self.session.commit()

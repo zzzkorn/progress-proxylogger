@@ -8,8 +8,6 @@ import log
 from common.conf import Config
 from common.mixins import SessionMixin
 from core.logger import LoggerCore
-from database.logger import Error
-from database.logger import Packet
 from database.logger import PacketType
 from database.logger import TcpSession
 from database.logger.common import InitLoggerModelsMixin
@@ -80,31 +78,51 @@ class Proxy(SessionMixin, threading.Thread):
             ),
         )
 
-    def _send_packet(self, packet):
+    def _send_proxy_packet(self, packet):
         self.sock.send(packet)
-        self.tcp_session.messages.append(
-            Packet(
+        self.core.packets.create(
+            self.session,
+            dict(
+                session=self.tcp_session,
                 raw=packet,
                 packet_type=PacketType.sent,
-            )
+            ),
         )
+
+    def _send_packet(self):
+        packet = self.client.recv(self.cfg.max_package_length)
+        self._send_proxy_packet(packet)
 
     def _receive_packet(self):
         reply = self.sock.recv(self.cfg.max_package_length)
-        if len(reply):
-            self.tcp_session.messages.append(
-                Packet(
-                    raw=reply,
-                    packet_type=PacketType.received,
-                )
-            )
-            self.client.send(reply)
-            return True
-        else:
+        if not len(reply):
             return False
+        self.core.packets.create(
+            self.session,
+            dict(
+                session=self.tcp_session,
+                raw=reply,
+                packet_type=PacketType.received,
+            ),
+        )
+        self.client.send(reply)
+        return True
 
     def _error(self, e):
-        self.tcp_session.messages.append(Error(data=f"{e}"))
+        self.core.errors.create(
+            self.session,
+            dict(session=self.tcp_session, data=f'"{e}"'),
+        )
+
+    def _registration(self, message):
+        self._send_proxy_packet(message)
+        self._receive_packet()
+        self._send_packet()
+
+    def _init_socket(self):
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.connect(self.cfg.remote)
+        self._init_tcp_session()
 
     def __init__(
         self,
@@ -121,24 +139,19 @@ class Proxy(SessionMixin, threading.Thread):
         self.init_session(engine)
         super().__init__()
 
-    def init_socket(self):
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.connect(self.cfg.remote)
-        self._init_tcp_session()
-
     def run(self):
         try:
-            self.init_socket()
-            self._send_packet(self.message)
+            self._init_socket()
+            self._registration(self.message)
 
             while True:
+                self._send_packet()
                 if not self._receive_packet():
                     break
 
         except socket.error as e:
             self._error(e)
         finally:
-            logger.info(f"{self.tcp_session}")
             self.sock.close()
             self.client.close()
             self.commit()
