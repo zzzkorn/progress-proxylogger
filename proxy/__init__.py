@@ -5,8 +5,8 @@ import threading
 
 # flake8: noqa: E402
 import log
-from common.conf import Config
 from common.mixins import SessionMixin
+from conf import Config
 from core.logger import LoggerCore
 from database.logger import PacketType
 from database.logger import TcpSession

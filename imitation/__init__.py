@@ -1,5 +1,5 @@
-from common.conf import Config
 from common.enums import ImitationType
+from conf import Config
 from imitation.client import ImitationClient
 from imitation.server import ImitationServer
 

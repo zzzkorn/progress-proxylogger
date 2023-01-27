@@ -7,7 +7,7 @@ from decouple import RepositoryEnv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from common.conf import Config
+from conf import Config
 from core.logger import LoggerCore
 from database.logger import Base as LogBase
 from tests.generator import generator
