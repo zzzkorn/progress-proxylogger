@@ -154,5 +154,5 @@ class Proxy(SessionMixin, threading.Thread):
         finally:
             self.sock.close()
             self.client.close()
-            self.commit()
+            self.close_session()
             sys.exit(1)

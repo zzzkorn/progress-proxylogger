@@ -7,6 +7,5 @@ class SessionMixin:
     def init_session(self, engine):
         self.session = Session(engine)
 
-    def commit(self):
-        self.session.commit()
+    def close_session(self):
         self.session.close()
