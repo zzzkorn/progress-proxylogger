@@ -15,7 +15,8 @@ ENCODING = "utf-8"
 FILE_LOG = True
 # Задержка отправки пакетов имитатора
 IMITATION_DELAY = 5
-
+# Время ожидания сокетом принятого пакета
+SOCKET_TIMEOUT = 200
 TEST_SERVER_PORT = 40000
 
 # ID устройст для имитации
