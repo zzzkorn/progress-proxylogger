@@ -121,6 +121,7 @@ class Proxy(SessionMixin, threading.Thread):
 
     def _init_socket(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.settimeout(self.cfg.socket_timeout)
         self.sock.connect(self.cfg.remote)
         self._init_tcp_session()
 

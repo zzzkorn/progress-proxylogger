@@ -11,6 +11,7 @@ from common.variables import IMITATION_DELAY
 from common.variables import IMITATION_IMEI_IDS
 from common.variables import MAX_CONNECTIONS
 from common.variables import MAX_PACKAGE_LENGTH
+from common.variables import SOCKET_TIMEOUT
 
 
 class ProxyPorts(Csv):
@@ -74,7 +75,12 @@ class Config:
         self.imitation_delay = self.config(
             "IMITATION_DELAY",
             default=IMITATION_DELAY,
-            cast=int,
+            cast=float,
+        )
+        self.socket_timeout = self.config(
+            "SOCKET_TIMEOUT",
+            default=SOCKET_TIMEOUT,
+            cast=float,
         )
         self.database_engine = self.config(
             "DATABASE_ENGINE",
